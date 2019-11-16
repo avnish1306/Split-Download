@@ -139,7 +139,7 @@ def acceptConnections(arg):
 		else:
 			print("Accepting the connection ",clientIp)
 			ipSockMap[address[0]] = connection
-		tempCount = len(list(clientsIp.keys()))
+		tempCount = len(list(ipSockMap.keys()))
 		if(tempCount>=(clientsCount+1)): # clientsCount = total - (1)master - 1(itself) but clientsIp map will contain master also
 			print("All clients are connected")
 			break
@@ -172,17 +172,20 @@ if __name__ == "__main__":
 			fileSize = 1000 #get from curl
 			#logic to divide file among all clients
 			clientIpSegmentMap = {}
-			clientIpSegmentMap[OWNIP]="1-100"
+			clientIpSegmentMap[OWNIP]={'segment':"1-100",'port':OWNPORT}
 			for clientIp in clientsIp:
 				clientIpSegmentMap[clientIp]={'segment':"1-100",'port':ipPortMap[clientIp]}
 			distributionMsg = MSG({"fileLink":fileLink, "clientIpSegmentMap":clientIpSegmentMap},"Distribution message",isMaster)
-			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			print("this is the distribution msg ")
+			distributionMsg.view()
 			for clientIp in clientsIp:
+				print("ip and port ",clientIp, ipPortMap[clientIp])
 				if clientIp in ipSockMap:
 					print("Aleardy connected")
 				elif clientIp == OWNIP:
 					print("Skipping since this is my ip: ",clientIp)
 				else:
+					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					print("making connection with: ",clientIp)
 					server_address = (clientIp, ipPortMap[clientIp] )
 					print('Connecting to %s port %s' % server_address)
@@ -222,13 +225,14 @@ if __name__ == "__main__":
 
 		acceptConnectionsThread=threading.Thread(target=acceptConnections,args=({'sock':sock,'clientsCount':clientsCount},))
 		acceptConnectionsThread.start()
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		
 		for clientIp in clientsIp:
 			if clientIp in ipSockMap:
 				print("Aleardy connected")
 			elif clientIp == OWNIP:
 				print("Skipping since this is my ip: ",clientIp)
 			else:
+				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				print("making connection request with: ",clientIp)
 				server_address = (clientIp, ipPortMap[clientIp])
 				print('Connecting to %s port %s' % server_address)
