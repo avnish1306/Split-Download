@@ -37,7 +37,7 @@ class Ui_Form(object):
         Form.setWindowTitle(_translate("Form", "Form"))
         self.label.setText(_translate("Form", "Enter File Link"))
         self.label_2.setText(_translate("Form", "Master"))
-        self.pushButton.setText(_translate("Form", "Strat Download"))
+        self.pushButton.setText(_translate("Form", "Start Download"))
 
 
 if __name__ == "__main__":

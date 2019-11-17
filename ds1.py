@@ -40,16 +40,3 @@ class Ui_Form(object):
         self.Client.setText(_translate("Form", "Serve Download"))
         self.label.setText(_translate("Form", "Use this system to"))
 
-def abc():
-	ui1.label.setText("abc")
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Form = QtWidgets.QWidget()
-    ui = Ui_Form()
-    ui.setupUi(Form)
-    ui1 = ui
-    ui.Master.clicked.connect(abc)
-    ui.Client.clicked.connect(abc)
-    Form.show()
-    sys.exit(app.exec_())

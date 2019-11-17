@@ -22,12 +22,12 @@ class Ui_Form(object):
         self.listView = QtWidgets.QListView(Form)
         self.listView.setGeometry(QtCore.QRect(60, 50, 321, 271))
         self.listView.setObjectName("listView")
-        self.pushButton = QtWidgets.QPushButton(Form)
-        self.pushButton.setGeometry(QtCore.QRect(60, 330, 71, 23))
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton_2 = QtWidgets.QPushButton(Form)
-        self.pushButton_2.setGeometry(QtCore.QRect(310, 330, 71, 23))
-        self.pushButton_2.setObjectName("pushButton_2")
+        self.Refresh = QtWidgets.QPushButton(Form)
+        self.Refresh.setGeometry(QtCore.QRect(60, 330, 71, 23))
+        self.Refresh.setObjectName("Refresh")
+        self.Next = QtWidgets.QPushButton(Form)
+        self.Next.setGeometry(QtCore.QRect(310, 330, 71, 23))
+        self.Next.setObjectName("Next")
         self.label_2 = QtWidgets.QLabel(Form)
         self.label_2.setGeometry(QtCore.QRect(190, 20, 51, 31))
         self.label_2.setMaximumSize(QtCore.QSize(16777215, 16777215))
@@ -41,9 +41,9 @@ class Ui_Form(object):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
         self.label.setText(_translate("Form", "Master"))
-        self.pushButton.setText(_translate("Form", "Refresh"))
-        self.pushButton_2.setText(_translate("Form", "Next"))
-        self.label_2.setText(_translate("Form", "Clinets"))
+        self.Refresh.setText(_translate("Form", "Refresh"))
+        self.Next.setText(_translate("Form", "Next"))
+        self.label_2.setText(_translate("Form", "Clients"))
 
 
 if __name__ == "__main__":
