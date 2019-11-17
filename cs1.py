@@ -46,6 +46,11 @@ class MSG:
 		rawData = json.dumps(self.getJson())
 		return rawData.encode('ASCII')
 
+def initiateDownload(args):
+	segment = args[0]
+	fileLink = args[1]
+	startDownload(segment, fileLink)
+
 def listenBroadcast(arg): #client
 	print("listening broadcast started")
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -171,13 +176,13 @@ if __name__ == "__main__":
 		while(announceBroadcastThread.isAlive()):
 			pass
 		if not announceBroadcastThread.isAlive(): #if got all the clients, Time to distribute the file and send it to others
-			fileLink = "http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso"
-			clientFileSection = divideFile(fileLink, clientsIp)
+			fileLink = "https://download.ccleaner.com/ccsetup563.exe"
 			clientsIp.append(OWNIP)
 			ipPortMap[OWNIP] = OWNPORT
+			clientFileSection = divideFile(fileLink, clientsIp)	
 			clientIpSegmentMap = {}
-			for clientIp in clientsIp,:
-				clientIpSegmentMap[clientIp]={'segment':clientFileSection[clientIp],'port':ipPortMap[clientIp]}
+			for clientIp in clientsIp:
+				clientIpSegmentMap[clientIp]={'segment': clientFileSection[clientIp],'port':ipPortMap[clientIp]}
 			distributionMsg = MSG({"fileLink":fileLink, "clientIpSegmentMap":clientIpSegmentMap},"Distribution message",isMaster)
 			print("this is the distribution msg ")
 			distributionMsg.view()
@@ -198,6 +203,9 @@ if __name__ == "__main__":
 					tcpSock.sendall(distributionMsg.dumpJson())
 					tcpSock.close()
 					print("distribution message sent")
+					segment = clientFileSection[OWNIP]
+					initiateDownloadThread = threading.Thread(target=initiateDownload,args=((segment,fileLink),)) #Download Started
+					initiateDownloadThread.start()
 					
 				#make direct connection and send the distribution message
 				#check if clientIp is it's own ip or not and is there already a connection or not
@@ -222,9 +230,10 @@ if __name__ == "__main__":
 		distributionMsg.loadJson(rawData)
 		print("distribution message recieved ")
 		distributionMsg.view()
-		segment = distributionMsg.data[clientIpSegmentMap][OWNIP]['segment']
+		segment = distributionMsg.data['clientIpSegmentMap'][OWNIP]['segment']
 		fileLink = distributionMsg.data['fileLink']
-		startDownload(segment, fileLink)		#Download Started
+		initiateDownloadThread = threading.Thread(target=initiateDownload,args=((segment,fileLink),)) #Download Started
+		initiateDownloadThread.start()
 		connection.close()
 		# clientsIp = clientsIp+ list(distributionMsg.data['clientIpSegmentMap'].keys())
 		# for clientIp in clientsIp:
