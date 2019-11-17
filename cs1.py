@@ -59,11 +59,13 @@ def listenBroadcast(arg): #client
 		#print('The client at {} says: {!r}'.format(address, text))
 	# hostname = socket.gethostname()
 	# ownIp = socket.gethostbyname(hostname)
+	sock.close()
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	res = MSG({'ip':OWNIP,'port':OWNPORT})
 	sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))#sock.sendto(res.dumpJson(), (multicastInterface, multicastPort))
 	#broadcast own ip
+	sock.close()
 	print("listening to master ended")
 	
 	
@@ -90,6 +92,7 @@ def announceBroadcast(arg): #master
 		#display received ips
 		#check if user want to announce again or not and continue the loop if refresh happen
 		# conditional : global isAnnouncementOn = False
+	sock.close()
 	print("announcing broadcast ended")
 	
 def listenBroadcastReply(arg): #master
@@ -124,6 +127,7 @@ def listenBroadcastReply(arg): #master
 		#receive client's reply and add ip to ip list
 		#check if announcement is still going on or not
 		#if announcement is on then continue reading else exit
+	sock.close()
 	print("listening broadcast reply ended")
 
 def acceptConnections(arg):
@@ -191,7 +195,9 @@ if __name__ == "__main__":
 					print("connected to client: ",clientIp)
 					ipSockMap[clientIp] = tcpSock
 					tcpSock.sendall(distributionMsg.dumpJson())
+					tcpSock.close()
 					print("distribution message sent")
+					
 				#make direct connection and send the distribution message
 				#check if clientIp is it's own ip or not and is there already a connection or not
 	else:
@@ -218,6 +224,7 @@ if __name__ == "__main__":
 		clientsIp =clientsIp+ list(distributionMsg.data['clientIpSegmentMap'].keys())
 		for clientIp in clientsIp:
 			ipPortMap[clientIp] = distributionMsg.data['clientIpSegmentMap'][clientIp]['port']
+		connection.close()
 		# clientsCount = len(clientsIp)
 		# sock.listen(clientsCount-2) #removed its own count and master
 
