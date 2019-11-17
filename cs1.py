@@ -5,6 +5,11 @@ import struct,json
 from services.portServices import get_free_tcp_port
 from services.divideFile import divideFile
 from services.startDownload import startDownload
+import ds1,ds1,ds3
+from PyQt5 import QtCore, QtGui, QtWidgets
+ui1 = "abc"
+ui2="abc"
+ui3="abc"
 isMaster=False
 isBusy=False  #Tell weather the this system is already busy in some download or not
 PORT=5200
@@ -21,7 +26,7 @@ ipSockMap={}
 ipThreadMap={}
 ipPortMap={}
 OWNPORT = get_free_tcp_port()
-OWNIP = '192.168.1.105'# socket.gethostbyname(socket.gethostname())
+OWNIP = '192.168.1.118'# socket.gethostbyname(socket.gethostname())
 tcpPort = 5500
 
 class MSG:
