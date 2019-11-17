@@ -19,7 +19,7 @@ ipSockMap={}
 ipThreadMap={}
 ipPortMap={}
 OWNPORT = get_free_tcp_port()
-OWNIP = '192.168.1.105'# socket.gethostbyname(socket.gethostname())
+OWNIP = '192.168.1.118'# socket.gethostbyname(socket.gethostname())
 tcpPort = 5500
 class MSG:
 	master = None
