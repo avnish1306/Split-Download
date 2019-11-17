@@ -191,6 +191,7 @@ if __name__ == "__main__":
 			distributionMsg = MSG({"fileLink":fileLink, "clientIpSegmentMap":clientIpSegmentMap},"Distribution message",isMaster)
 			print("this is the distribution msg ")
 			distributionMsg.view()
+			segment = clientFileSection[OWNIP]
 			for clientIp in clientsIp:
 				print("ip and port ",clientIp, ipPortMap[clientIp])
 				if clientIp in ipSockMap:
@@ -208,9 +209,9 @@ if __name__ == "__main__":
 					tcpSock.sendall(distributionMsg.dumpJson())
 					tcpSock.close()
 					print("distribution message sent")
-					segment = clientFileSection[OWNIP]
-					initiateDownloadThread = threading.Thread(target=initiateDownload,args=((segment,fileLink),)) #Download Started
-					initiateDownloadThread.start()
+					
+				initiateDownloadThread = threading.Thread(target=initiateDownload,args=((segment,fileLink),)) #Download Started
+				initiateDownloadThread.start()
 					
 				#make direct connection and send the distribution message
 				#check if clientIp is it's own ip or not and is there already a connection or not
