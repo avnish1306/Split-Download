@@ -19,7 +19,7 @@ ipSockMap={}
 ipThreadMap={}
 ipPortMap={}
 OWNPORT = get_free_tcp_port()
-OWNIP = '192.168.1.118'# socket.gethostbyname(socket.gethostname())
+OWNIP = '192.168.1.105'# socket.gethostbyname(socket.gethostname())
 tcpPort = 5500
 class MSG:
 	master = None
@@ -57,8 +57,8 @@ def listenBroadcast(arg): #client
 		if(res.master==True or res.master=="True"):
 			break
 		#print('The client at {} says: {!r}'.format(address, text))
-	hostname = socket.gethostname()
-	ownIp = socket.gethostbyname(hostname)
+	# hostname = socket.gethostname()
+	# ownIp = socket.gethostbyname(hostname)
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	res = MSG({'ip':OWNIP,'port':OWNPORT})
@@ -183,14 +183,14 @@ if __name__ == "__main__":
 				elif clientIp == OWNIP:
 					print("Skipping since this is my ip: ",clientIp)
 				else:
-					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					tcpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					print("making connection with: ",clientIp)
-					server_address = (clientIp, ipPortMap[clientIp] )
-					print('Connecting to %s port %s' % server_address)
-					sock.connect(server_address)
+					tcpServer_address = (clientIp, ipPortMap[clientIp] )
+					print('Connecting to %s port %s' % tcpServer_address)
+					tcpSock.connect(tcpServer_address)
 					print("connected to client: ",clientIp)
-					ipSockMap[clientIp] = sock
-					sock.sendall(distributionMsg.dumpJson())
+					ipSockMap[clientIp] = tcpSock
+					tcpSock.sendall(distributionMsg.dumpJson())
 					print("distribution message sent")
 				#make direct connection and send the distribution message
 				#check if clientIp is it's own ip or not and is there already a connection or not
@@ -201,14 +201,14 @@ if __name__ == "__main__":
 		while(listenBroadcastThread.isAlive()):
 			pass
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		server_address = ('', OWNPORT)
+		server_address = (OWNIP, OWNPORT)
 		
 		sock.bind(server_address)
 		sock.listen(1)
 		print('Waiting for master to connect on %s port %s' % server_address)
 		connection, address = sock.accept()
 		print("connected to master")
-		clientsIp.append(address[0])
+		#clientsIp.append(address[0])
 		ipSockMap[address[0]] = connection
 		rawData = connection.recv(BUFSIZE)
 		distributionMsg = MSG({})
@@ -218,25 +218,25 @@ if __name__ == "__main__":
 		clientsIp =clientsIp+ list(distributionMsg.data['clientIpSegmentMap'].keys())
 		for clientIp in clientsIp:
 			ipPortMap[clientIp] = distributionMsg.data['clientIpSegmentMap'][clientIp]['port']
-		clientsCount = len(clientsIp)
-		sock.listen(clientsCount-2) #removed its own count and master
+		# clientsCount = len(clientsIp)
+		# sock.listen(clientsCount-2) #removed its own count and master
 
-		acceptConnectionsThread=threading.Thread(target=acceptConnections,args=({'sock':sock,'clientsCount':clientsCount},))
-		acceptConnectionsThread.start()
+		# acceptConnectionsThread=threading.Thread(target=acceptConnections,args=({'sock':sock,'clientsCount':clientsCount},))
+		# acceptConnectionsThread.start()
 		
-		for clientIp in clientsIp:
-			if clientIp in ipSockMap:
-				print("Aleardy connected")
-			elif clientIp == OWNIP:
-				print("Skipping since this is my ip: ",clientIp)
-			else:
-				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				print("making connection request with: ",clientIp)
-				server_address = (clientIp, ipPortMap[clientIp])
-				print('Connecting to %s port %s' % server_address)
-				sock.connect(server_address)
-				print("connected to client: ",clientIp)
-				ipSockMap[clientIp] = sock
+		# for clientIp in clientsIp:
+		# 	if clientIp in ipSockMap:
+		# 		print("Aleardy connected")
+		# 	elif clientIp == OWNIP:
+		# 		print("Skipping since this is my ip: ",clientIp)
+		# 	else:
+		# 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		# 		print("making connection request with: ",clientIp)
+		# 		server_address = (clientIp, ipPortMap[clientIp])
+		# 		print('Connecting to %s port %s' % server_address)
+		# 		sock.connect(server_address)
+		# 		print("connected to client: ",clientIp)
+		# 		ipSockMap[clientIp] = sock
 
 		#make one thread to accept the connections
 		
