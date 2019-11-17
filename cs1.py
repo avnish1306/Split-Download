@@ -43,8 +43,6 @@ class MSG:
 		rawData = json.dumps(self.getJson())
 		return rawData.encode('ASCII')
 
-
-
 def listenBroadcast(arg): #client
 	print("listening broadcast started")
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
