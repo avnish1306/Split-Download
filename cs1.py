@@ -3,6 +3,8 @@ import time
 import socket
 import struct,json
 from services.portServices import get_free_tcp_port
+from services.divideFile import divideFile
+from services.startDownload import startDownload
 isMaster=False
 isBusy=False  #Tell weather the this system is already busy in some download or not
 PORT=5200
@@ -21,6 +23,7 @@ ipPortMap={}
 OWNPORT = get_free_tcp_port()
 OWNIP = '192.168.1.118'# socket.gethostbyname(socket.gethostname())
 tcpPort = 5500
+
 class MSG:
 	master = None
 	msg = None
@@ -59,11 +62,13 @@ def listenBroadcast(arg): #client
 		#print('The client at {} says: {!r}'.format(address, text))
 	# hostname = socket.gethostname()
 	# ownIp = socket.gethostbyname(hostname)
+	sock.close()
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	res = MSG({'ip':OWNIP,'port':OWNPORT})
 	sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))#sock.sendto(res.dumpJson(), (multicastInterface, multicastPort))
 	#broadcast own ip
+	sock.close()
 	print("listening to master ended")
 	
 	
@@ -84,12 +89,14 @@ def announceBroadcast(arg): #master
 		choice = int(input())
 		if(choice==0):
 			isAnnouncementOn = False
+			res.msg = 'Broadcast Ends'
 			sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))
 			break
 		#announce the welcome message over network
 		#display received ips
 		#check if user want to announce again or not and continue the loop if refresh happen
 		# conditional : global isAnnouncementOn = False
+	sock.close()
 	print("announcing broadcast ended")
 	
 def listenBroadcastReply(arg): #master
@@ -118,12 +125,10 @@ def listenBroadcastReply(arg): #master
 			clientsIp.append(res.data['ip'])
 			ipPortMap[res.data['ip']] = res.data['port']
 		print(clientsIp , ipPortMap, 'Alka', isAnnouncementOn)
-		
-		if(isAnnouncementOn==False or isAnnouncementOn=="False"):
-			break
 		#receive client's reply and add ip to ip list
 		#check if announcement is still going on or not
 		#if announcement is on then continue reading else exit
+	sock.close()
 	print("listening broadcast reply ended")
 
 def acceptConnections(arg):
@@ -166,13 +171,13 @@ if __name__ == "__main__":
 		while(announceBroadcastThread.isAlive()):
 			pass
 		if not announceBroadcastThread.isAlive(): #if got all the clients, Time to distribute the file and send it to others
-			fileLink = "https://abc.com/download"
-			fileSize = 1000 #get from curl
-			#logic to divide file among all clients
+			fileLink = "http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso"
+			clientFileSection = divideFile(fileLink, clientsIp)
+			clientsIp.append(OWNIP)
+			ipPortMap[OWNIP] = OWNPORT
 			clientIpSegmentMap = {}
-			clientIpSegmentMap[OWNIP]={'segment':"1-100",'port':OWNPORT}
-			for clientIp in clientsIp:
-				clientIpSegmentMap[clientIp]={'segment':"1-100",'port':ipPortMap[clientIp]}
+			for clientIp in clientsIp,:
+				clientIpSegmentMap[clientIp]={'segment':clientFileSection[clientIp],'port':ipPortMap[clientIp]}
 			distributionMsg = MSG({"fileLink":fileLink, "clientIpSegmentMap":clientIpSegmentMap},"Distribution message",isMaster)
 			print("this is the distribution msg ")
 			distributionMsg.view()
@@ -191,7 +196,9 @@ if __name__ == "__main__":
 					print("connected to client: ",clientIp)
 					ipSockMap[clientIp] = tcpSock
 					tcpSock.sendall(distributionMsg.dumpJson())
+					tcpSock.close()
 					print("distribution message sent")
+					
 				#make direct connection and send the distribution message
 				#check if clientIp is it's own ip or not and is there already a connection or not
 	else:
@@ -215,9 +222,14 @@ if __name__ == "__main__":
 		distributionMsg.loadJson(rawData)
 		print("distribution message recieved ")
 		distributionMsg.view()
-		clientsIp =clientsIp+ list(distributionMsg.data['clientIpSegmentMap'].keys())
-		for clientIp in clientsIp:
-			ipPortMap[clientIp] = distributionMsg.data['clientIpSegmentMap'][clientIp]['port']
+		segment = distributionMsg.data['clientIpSegmentMap'][OWNIP]['segment']
+		fileLink = distributionMsg.data['fileLink']
+		startDownload(segment, fileLink)		#Download Started
+		connection.close()
+		# clientsIp = clientsIp+ list(distributionMsg.data['clientIpSegmentMap'].keys())
+		# for clientIp in clientsIp:
+		# 	ipPortMap[clientIp] = distributionMsg.data['clientIpSegmentMap'][clientIp]['port']
+		
 		# clientsCount = len(clientsIp)
 		# sock.listen(clientsCount-2) #removed its own count and master
 
