@@ -4,6 +4,7 @@ import re
 def divideFile(url, clientList):
     #clientList = ['192.168.1.1', '192.168.1.2', '192.168.1.3','192.162.2.3']
     #url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
+    print('Please wait while segments are being calculated')
     head = requests.head(url, allow_redirects=True).headers
     size = head.get('Content-Length')
     start = 0
