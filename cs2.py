@@ -45,13 +45,13 @@ class MSG:
 		print("\nMaster: ",self.master,"\nMessage: ",self.msg,"\nData: ",self.data)
 	def getJson(self):
 		return {'master':self.master,'msg':self.msg,'data':self.data}
-	def loadJson(self,rawData):
+	def loadJson(self,rawData):                 #JSON to Python
 		decodedData = rawData.decode('ASCII')
 		obj = json.loads(decodedData)
 		self.master = obj['master']
 		self.msg = obj['msg']
 		self.data = obj['data']
-	def dumpJson(self):
+	def dumpJson(self):                          #Python to JSON
 		rawData = json.dumps(self.getJson())
 		return rawData.encode('ASCII')
 
