@@ -8,19 +8,19 @@ def divideFile(url, clientList):
     #url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
     logging.warning('Please wait while segments are being calculated')
     head = requests.head(url, allow_redirects=True).headers
-    size = head.get('Content-Length')
+    size = int(head.get('Content-Length'))-1
     start = 0
-    if int(size) % len(clientList) == 0:
-        individualSize = int(size) / len(clientList)
+    if size % len(clientList) == 0:
+        individualSize = size / len(clientList)
     else:
-        individualSize = int(size) // len(clientList)
+        individualSize = size // len(clientList)
     end = individualSize
     clientFileSection = {}
     for clientIp in clientList:
         clientFileSection[clientIp] = str(int(start)) + '-' + str(int(end))
         start = end + 1
         end += individualSize
-    clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(int(size))
+    clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(size)
     logging.warning('File Size = {}'.format(size))
     logging.warning (clientFileSection)
     return clientFileSection

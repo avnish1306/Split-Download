@@ -11,6 +11,7 @@ from services.getOwnIp import getOwnIp
 from services.sendFile import sendFile
 from services.recvFile import recvFile
 from services.getFileDetails import getFileDetails
+from services.merge import merge
 import ds1
 import ds2
 import ds3
@@ -98,9 +99,11 @@ def listenClientTcpReq(arg):
         if address[0] not in ipSockMap:
             ipSockMap[address[0]]=connection
         logging.warning(f'Connected to client(Inside listenClientTcpReq): {address[0]}, {address[1]}')
+        logging.warning(f"ipSockMap.keys(): {len(ipSockMap.keys())}  totalClients:  {totalClients}")
         if len(ipSockMap.keys())==totalClients:
             logging.warning("All clients connected")
             break
+    logging.warning("Exiting listenClientTcpReq")
 
  
 def initiateDownload(args):
@@ -159,6 +162,8 @@ def listenBroadcast(arg):  # client
                 logging.warning(f'Requested connection: {tcpSock}')  
                 ipSockMap[client]=tcpSock
 
+        threads = []
+
         for client in ipSockMap:
             if(client != OWNIP):
                 tcpSock = ipSockMap[client]
@@ -166,6 +171,7 @@ def listenBroadcast(arg):  # client
                 filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
                 recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
                 recvFileThread.start()
+                threads.append(recvFileThread)
 
         for x in ipSockMap:
             logging.warning(x)
@@ -188,12 +194,19 @@ def listenBroadcast(arg):  # client
                     tcpSock = ipSockMap[client]
                     sendFileThread = threading.Thread(target=sendFile,args=((client, tcpSock,filename),))
                     sendFileThread.start()
+                    threads.append(sendFileThread)
 
         # logging.warning("recvThread joined.")
-        recvFileThread.join()
-        # logging.warning("sendThread joined")
-        sendFileThread.join()
-        listenClientTcpReqThread.join()
+        # recvFileThread.join()
+        # # logging.warning("sendThread joined")
+        # sendFileThread.join()
+        for thread in threads:
+            thread.join()
+        logging.warning("Out of all Send and Recv Threads.")
+        # listenClientTcpReqThread.join()
+        # logging.warning("Out of listenClientTcpReqThread.")   
+        filename = str(url[len(url) - 1])
+        merge(filename,filename)
         # tcpSock.close()
         logging.warning("listening to master ended")
 
@@ -291,15 +304,17 @@ def Master(arg):
 
         url = fileLink.split('/')
 
+        threads = []
         for ipSock in ipSockMap:
             client = ipSock
             if client != OWNIP:
                 logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
                 tcpSock = ipSockMap[client]
-                filename = str(url[len(url) - 1]) + str(clientIpSegmentMap[client])
+                # filename = str(url[len(url) - 1]) + str(clientIpSegmentMap[client])
                 filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
                 recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
                 recvFileThread.start()
+                threads.append(recvFileThread)
 
         initiateDownloadThread = threading.Thread(target=initiateDownload, args=(
             (segment, fileLink),))  # Download Started in Master
@@ -320,12 +335,17 @@ def Master(arg):
                     tcpSock = ipSockMap[client]
                     sendFileThread = threading.Thread(target=sendFile,args=((client,tcpSock,filename),))
                     sendFileThread.start()
+                    threads.append(sendFileThread)
 
         # make direct connection and send the distribution message
         # check if clientIp is it's own ip or not and is there already a connection or not
         logging.warning("recvFileThread joined")
-        recvFileThread.join()
-        sendFileThread.join()
+        for thread in threads:
+            thread.join()
+        # recvFileThread.join()
+        # sendFileThread.join()
+        filename = str(url[len(url) - 1])
+        merge(filename,filename)
 
 
 def Client():
