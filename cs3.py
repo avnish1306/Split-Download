@@ -167,7 +167,7 @@ def listenBroadcast(arg):  # client
         for client in ipSockMap:
             if(client != OWNIP):
                 tcpSock = ipSockMap[client]
-                filename = str(url[len(url) - 1]) + str(clientIpSegmentMap[client])
+                # filename = str(url[len(url) - 1]) + str(clientIpSegmentMap[client])
                 filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
                 recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
                 recvFileThread.start()
@@ -184,7 +184,8 @@ def listenBroadcast(arg):  # client
         while(initiateDownloadThread.is_alive()):
             pass
         
-        filename = str(url[len(url) - 1]) + str(segment)
+        filename = str(url[len(url) - 1]).split('.')[0] + str(segment) +'.spld'
+
 
         if not initiateDownloadThread.is_alive():
             for ipSock in ipSockMap:
@@ -204,9 +205,10 @@ def listenBroadcast(arg):  # client
             thread.join()
         logging.warning("Out of all Send and Recv Threads.")
         # listenClientTcpReqThread.join()
-        # logging.warning("Out of listenClientTcpReqThread.")   
+        # logging.warning("Out of listenClientTcpReqThread.")  
+        regexFile = str(url[len(url) - 1]).split('.')[0]
         filename = str(url[len(url) - 1])
-        merge(filename,filename)
+        merge(regexFile,filename)
         # tcpSock.close()
         logging.warning("listening to master ended")
 
@@ -325,7 +327,7 @@ def Master(arg):
             pass
 
         segment = clientIpSegmentMap[OWNIP]
-        filename = str(url[len(url) - 1]) + str(segment)
+        filename = str(url[len(url) - 1]).split('.')[0] + str(segment) + '.spld'
 
         if not initiateDownloadThread.is_alive():
             for ipSock in ipSockMap:
@@ -344,8 +346,9 @@ def Master(arg):
             thread.join()
         # recvFileThread.join()
         # sendFileThread.join()
+        regexFile = str(url[len(url) - 1]).split('.')[0]
         filename = str(url[len(url) - 1])
-        merge(filename,filename)
+        merge(regexFile,filename)
 
 
 def Client():

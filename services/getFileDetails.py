@@ -8,5 +8,6 @@ def getFileDetails(OWNIP,distributionMsg,socket):
 	fileSize = int(segment[1])-int(segment[0])+1
 	url = fileLink.split('/')
 	fileName = str(url[len(url) - 1]) + str(distributionMsg.data["clientIpSegmentMap"][addr])
+	fileName = "".join(fileName.split(".exe"))+".spld"
 	return (fileName,fileSize)
 	
