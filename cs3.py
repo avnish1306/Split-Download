@@ -181,21 +181,22 @@ def listenBroadcast(arg):  # client
         initiateDownloadThread.start()
         
         
-        while(initiateDownloadThread.is_alive()):
-            pass
+        # while(initiateDownloadThread.is_alive()):
+        #     pass
         
         filename = str(url[len(url) - 1]).split('.')[0] + str(segment) +'.spld'
 
 
-        if not initiateDownloadThread.is_alive():
-            for ipSock in ipSockMap:
-                client = ipSock
-                if client != OWNIP:
-                    logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
-                    tcpSock = ipSockMap[client]
-                    sendFileThread = threading.Thread(target=sendFile,args=((client, tcpSock,filename),))
-                    sendFileThread.start()
-                    threads.append(sendFileThread)
+        # if not initiateDownloadThread.is_alive():
+        for ipSock in ipSockMap:
+            client = ipSock
+            if client != OWNIP:
+                logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
+                tcpSock = ipSockMap[client]
+                fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, False)
+                sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
+                sendFileThread.start()
+                threads.append(sendFileThread)
 
         # logging.warning("recvThread joined.")
         # recvFileThread.join()
@@ -323,21 +324,22 @@ def Master(arg):
         initiateDownloadThread.start()
 
 
-        while(initiateDownloadThread.is_alive()):
-            pass
+        # while(initiateDownloadThread.is_alive()):
+        #     pass
 
         segment = clientIpSegmentMap[OWNIP]
         filename = str(url[len(url) - 1]).split('.')[0] + str(segment) + '.spld'
 
-        if not initiateDownloadThread.is_alive():
-            for ipSock in ipSockMap:
-                client = ipSock
-                if client != OWNIP:
-                    # logging.warning(ipSock, ipSockMap[ipSock])
-                    tcpSock = ipSockMap[client]
-                    sendFileThread = threading.Thread(target=sendFile,args=((client,tcpSock,filename),))
-                    sendFileThread.start()
-                    threads.append(sendFileThread)
+        # if not initiateDownloadThread.is_alive():
+        for ipSock in ipSockMap:
+            client = ipSock
+            if client != OWNIP:
+                # logging.warning(ipSock, ipSockMap[ipSock])
+                tcpSock = ipSockMap[client]
+                fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
+                sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
+                sendFileThread.start()
+                threads.append(sendFileThread)
 
         # make direct connection and send the distribution message
         # check if clientIp is it's own ip or not and is there already a connection or not

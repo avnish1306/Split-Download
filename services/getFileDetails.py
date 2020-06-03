@@ -1,8 +1,11 @@
 
-def getFileDetails(OWNIP,distributionMsg,socket):
+def getFileDetails(OWNIP,distributionMsg,socket,flag=True):
 	laddr= socket.getsockname()[0]
 	raddr = socket.getpeername()[0]
-	addr = laddr if laddr!=OWNIP else raddr
+	if True:
+		addr = laddr if laddr!=OWNIP else raddr
+	else:
+		addr = laddr if laddr==OWNIP else raddr
 	segment = distributionMsg.data["clientIpSegmentMap"][addr].split("-")
 	fileLink = distributionMsg.data["fileLink"]
 	fileSize = int(segment[1])-int(segment[0])+1
