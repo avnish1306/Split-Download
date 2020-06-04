@@ -41,9 +41,9 @@ class Ui_Form(object):
         movie.start()
         self.label_2.setLayout(QtWidgets.QHBoxLayout())
 
-    def changeText(self, text:str):
+    def changeText(self, text:str, color:str='black'):
         _translate = QtCore.QCoreApplication.translate
-        self.label.setText(_translate("Form", f"<html><head/><body><p align=\"center\"><span style=\" font-size:12pt; color:green; font-weight:600;\">{text}</span></p></body></html>"))
+        self.label.setText(_translate("Form", f"<html><head/><body><p align=\"center\"><span style=\" font-size:12pt; color:{color}; font-weight:600;\">{text}</span></p></body></html>"))
 
 # -*- coding: utf-8 -*-
 

@@ -114,10 +114,13 @@ def listenClientTcpReq(arg):
 def initiateDownload(args):
     segment = args[0]
     fileLink = args[1]
-    startDownload(segment, fileLink)
+    filenameWithExt = args[2]
+    startDownload(segment, fileLink, filenameWithExt)
+    logging.warning("Exiting initiateDownload")
 
 def listenBroadcast(arg):  # client
     global clientIpList
+    global clientDownloadStarted
     data = address = None
     logging.warning("listening broadcast started")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -142,8 +145,10 @@ def listenBroadcast(arg):  # client
         distributionMsg = MSG({})
         distributionMsg.loadJson(rawData)
         logging.warning("distribution message received ")
+        clientDownloadStarted()
         distributionMsg.view()
-        
+        filenameWithExt = distributionMsg.data['filenameWithExt']
+
         clientIpSegmentMap = distributionMsg.data['clientIpSegmentMap']
         segment = clientIpSegmentMap[OWNIP]
         logging.warning (segment)
@@ -154,8 +159,6 @@ def listenBroadcast(arg):  # client
         listenClientTcpReqThread = threading.Thread(target=listenClientTcpReq, args = ("",))
         listenClientTcpReqThread.start()
 
-        url = fileLink.split('/')
-        
         recvFileThread = None
         sleep(random()*10)
         for client in clientIpList:
@@ -180,12 +183,12 @@ def listenBroadcast(arg):  # client
             logging.warning(x)
 
         initiateDownloadThread = threading.Thread(
-            target=initiateDownload, args=((segment, fileLink),))  # Download Started
+            target=initiateDownload, args=((segment, fileLink, filenameWithExt),))  # Download Started
         initiateDownloadThread.start()
         threads.append(initiateDownloadThread)
         
         
-        filename = str(url[len(url) - 1]).split('.')[0] + str(segment) +'.spld'
+        filename = filenameWithExt.split('.')[0] + str(segment) +'.spld'
 
         for ipSock in ipSockMap:
             client = ipSock
@@ -201,9 +204,9 @@ def listenBroadcast(arg):  # client
             thread.join()
         logging.warning("Out of all Send and Recv Threads.")
  
-        regexFile = str(url[len(url) - 1]).split('.')[0]
-        filename = str(url[len(url) - 1])
-        merge(regexFile,filename)
+        
+        regexFile = filenameWithExt.split('.')[0]
+        merge(regexFile,filenameWithExt)
         downloadComplete()
         # tcpSock.close()
         logging.warning("listening to master ended")
@@ -228,7 +231,10 @@ def announceBroadcast(arg):
         if(choice == 0):
             isAnnouncementOn = False
             res.msg = 'Broadcast Ends'
-            sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))
+            # sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))
+            tcpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            tcpServerAddress = (OWNIP, tcpPort)
+            tcpSock.connect(tcpServerAddress)
             break
         choice = -1
     # announce the welcome message over network
@@ -238,25 +244,28 @@ def announceBroadcast(arg):
     sock.close()
     logging.warning("announcing broadcast ended")
 
-def masterAcceptConnection(args):
+def sendDistributionMsg(args):
     global segmentsFetched
     global distributionMsg
     connection = args[0]
     connection.sendall(distributionMsg.dumpJson())
+    logging.warning("Exiting sendDistributionMsg")
 
 def listenTcp(arg):
     tcpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serverAddress = (OWNIP, tcpPort)
     tcpSock.bind(serverAddress)
     tcpSock.listen(10)
-    while(True):       
+    while(True):    
         connection, address = tcpSock.accept()
+        if connection.getsockname()[0] == connection.getpeername()[0]:
+            break
         tcpConnectionList.append((connection, address))
         clientsIp.append(address[0])
         ipSockMap[address[0]] = connection
+        # refreshList()
         logging.warning(f'Connected to : {address[0]} : {address[1]}')
-        if choice == 0:
-            break
+    logging.warning("Exiting listenTcp thread.")
 
 def Master(arg):
     startMasterScreen()
@@ -270,88 +279,106 @@ def Master(arg):
     announceBroadcastThread = threading.Thread(
         target=announceBroadcast, args=("",))
     announceBroadcastThread.start()
-    while(announceBroadcastThread.is_alive()):
-        pass
+    announceBroadcastThread.join()
+    # while(announceBroadcastThread.is_alive()):
+    #     pass
+
     # if got all the clients, Time to distribute the file and send it to others
-    if not announceBroadcastThread.is_alive():
-        global segmentsFetched
-        global distributionMsg
-        clientsIp.append(OWNIP)  
-        clientIpSegmentMap = divideFile(fileLink, clientsIp)
-        distributionMsg = MSG(
-            {"fileLink": fileLink, "clientIpSegmentMap": clientIpSegmentMap}, "Distribution message", isMaster)
-        logging.warning("This is the distribution msg ")
-        distributionMsg.view()
-        for element in tcpConnectionList:
-            masterAcceptConnectionThread = threading.Thread(target = masterAcceptConnection, args = ((element[0],element[1]),))
-            masterAcceptConnectionThread.start() 
-              
-        segmentsFetched = True
-        segment = clientIpSegmentMap[OWNIP]
+    # if not announceBroadcastThread.is_alive():
+    global segmentsFetched
+    global distributionMsg
+    clientsIp.append(OWNIP)
+    clientIpSegmentMap, filenameWithExt = divideFile(fileLink, clientsIp)
+    distributionMsg = MSG(
+        {"fileLink": fileLink, "clientIpSegmentMap": clientIpSegmentMap, "filenameWithExt" : filenameWithExt}, "Distribution message", isMaster)
+    logging.warning("This is the distribution msg ")
+    distributionMsg.view()
+    for element in tcpConnectionList:
+        sendDistributionMsgThread = threading.Thread(target = sendDistributionMsg, args = ((element[0],element[1]),))
+        sendDistributionMsgThread.start()
+ 
+            
+    segmentsFetched = True
+    segment = clientIpSegmentMap[OWNIP]
 
-        url = fileLink.split('/')
+    threads = []
+    for ipSock in ipSockMap:
+        client = ipSock
+        if client != OWNIP:
+            logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
+            tcpSock = ipSockMap[client]
+            filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
+            recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
+            recvFileThread.start()
+            threads.append(recvFileThread)
 
-        threads = []
-        for ipSock in ipSockMap:
-            client = ipSock
-            if client != OWNIP:
-                logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
-                tcpSock = ipSockMap[client]
-                filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
-                recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
-                recvFileThread.start()
-                threads.append(recvFileThread)
+    initiateDownloadThread = threading.Thread(target=initiateDownload, args=(
+        (segment, fileLink, filenameWithExt),))  # Download Started in Master
+    initiateDownloadThread.start()
+    threads.append(initiateDownloadThread)
 
-        initiateDownloadThread = threading.Thread(target=initiateDownload, args=(
-            (segment, fileLink),))  # Download Started in Master
-        initiateDownloadThread.start()
-        threads.append(initiateDownloadThread)
+    segment = clientIpSegmentMap[OWNIP]
+    filename = filenameWithExt.split('.')[0] + str(segment) + '.spld'
 
-        segment = clientIpSegmentMap[OWNIP]
-        filename = str(url[len(url) - 1]).split('.')[0] + str(segment) + '.spld'
+    for ipSock in ipSockMap:
+        client = ipSock
+        if client != OWNIP:
+            tcpSock = ipSockMap[client]
+            fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
+            sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
+            sendFileThread.start()
+            threads.append(sendFileThread)
 
-        for ipSock in ipSockMap:
-            client = ipSock
-            if client != OWNIP:
-                tcpSock = ipSockMap[client]
-                fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
-                sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
-                sendFileThread.start()
-                threads.append(sendFileThread)
+    logging.warning("recvFileThread joined")
+    for thread in threads:
+        thread.join()
 
-        logging.warning("recvFileThread joined")
-        for thread in threads:
-            thread.join()
-
-        regexFile = str(url[len(url) - 1]).split('.')[0]
-        filename = str(url[len(url) - 1])
-        merge(regexFile,filename)
-        downloadComplete()
-
+    regexFile = filenameWithExt.split('.')[0]
+    merge(regexFile,filenameWithExt)
+    downloadComplete()
+    logging.warning("Exiting Master")
 
 def Client():
     listenBroadcastThread = threading.Thread(
         target=listenBroadcast, args=("",))
     listenBroadcastThread.start()
     Form.close()
+    ui5.changeText("Waiting",'red')
     Form5.show()
+
     # listenBroadcastThread.join()
-    
+def clientDownloadStarted():
+    ui5.changeText("Downloading")
 
 def startMasterScreen():
     global app
     global Form2
     global Form
 
+def checkClientList(args):
+    global clientsIp
+    global choice
+    logging.warning("CheckClientList called")
+    length = 0
+    while(choice != 0):
+        logging.warning(f'{len(clientsIp)}')
+        sleep(1)
+        if(length != len(clientsIp)):
+            length = len(clientsIp)
+            logging.warning("Refreshing List")
+            refreshList()
+    logging.warning("Exiting chechkClientList")
+        
 
 def startMasterUtil():
     logging.warning("Master")
     masterThread = threading.Thread(target=Master, args=('',))
     masterThread.start()
+    checkClientListThread = threading.Thread(target=checkClientList, args=('',))
+    checkClientListThread.start()
     Form.close()
     Form2.show()
     refreshList()
-
 
 def reannounce():
     global choice
@@ -373,6 +400,7 @@ def endAnnounceMent():
     global choice
     global fileLink
     fileLink = str(ui4.downloadLink.toPlainText())
+    fileLink = fileLink.strip()
     choice = 0
     Form4.close()
     Form5.show()
@@ -382,7 +410,7 @@ def urlPicker():
     Form4.show()
 
 def downloadComplete():
-    ui5.changeText("Download Complete")
+    ui5.changeText("Download Complete",'green')
     ui5.label_2.setVisible(False)
 
 

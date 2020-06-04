@@ -6,8 +6,11 @@ logging.basicConfig(format=FORMAT, level=logging.WARNING)
 def divideFile(url, clientList):
     #clientList = ['192.168.1.1', '192.168.1.2', '192.168.1.3','192.162.2.3']
     #url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
-    logging.warning('Please wait while segments are being calculated')
+    logging.warning(f'Please wait while segments are being calculated for {url}')
     head = requests.head(url, allow_redirects=True).headers
+    logging.warning(f'{head}')
+    contentDisposition = head.get('Content-Disposition')
+    filename = contentDisposition.split('filename=')[1]
     size = int(head.get('Content-Length'))-1
     start = 0
     if size % len(clientList) == 0:
@@ -25,4 +28,4 @@ def divideFile(url, clientList):
         clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(size)
     logging.warning('File Size = {}'.format(size))
     logging.warning (clientFileSection)
-    return clientFileSection
+    return (clientFileSection, filename)

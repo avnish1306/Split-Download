@@ -7,10 +7,8 @@ def getFileDetails(OWNIP,distributionMsg,socket,flag=True):
 	else:
 		addr = laddr if laddr==OWNIP else raddr
 	segment = distributionMsg.data["clientIpSegmentMap"][addr].split("-")
-	fileLink = distributionMsg.data["fileLink"]
 	fileSize = int(segment[1])-int(segment[0])+1
-	url = fileLink.split('/')
-	fileName = str(url[len(url) - 1]) + str(distributionMsg.data["clientIpSegmentMap"][addr])
-	fileName = "".join(fileName.split(".exe"))+".spld"
+	filenameWithExt = distributionMsg.data['filenameWithExt']
+	fileName = filenameWithExt.split('.')[0] + str(distributionMsg.data["clientIpSegmentMap"][addr])+".spld"
 	return (fileName,fileSize)
 	
