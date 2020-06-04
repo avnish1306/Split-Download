@@ -7,18 +7,22 @@
     <x>0</x>
     <y>0</y>
     <width>436</width>
-    <height>451</height>
+    <height>418</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Client List</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>download.png</normaloff>download.png</iconset>
   </property>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>0</y>
-     <width>51</width>
+     <y>10</y>
+     <width>411</width>
      <height>31</height>
     </rect>
    </property>
@@ -29,7 +33,7 @@
     </size>
    </property>
    <property name="text">
-    <string>Master</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Master&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="textFormat">
     <enum>Qt::AutoText</enum>
@@ -39,7 +43,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>50</y>
+     <y>70</y>
      <width>321</width>
      <height>271</height>
     </rect>
@@ -49,34 +53,63 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>330</y>
-     <width>71</width>
-     <height>23</height>
+     <y>360</y>
+     <width>91</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
     <string>Refresh</string>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/refresh.png</normaloff>icons/refresh.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>35</width>
+     <height>35</height>
+    </size>
+   </property>
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_2">
    <property name="geometry">
     <rect>
      <x>310</x>
-     <y>330</y>
-     <width>71</width>
-     <height>23</height>
+     <y>360</y>
+     <width>81</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
     <string>Next</string>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/next.png</normaloff>icons/next.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>35</width>
+     <height>35</height>
+    </size>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>190</x>
-     <y>20</y>
-     <width>51</width>
+     <x>50</x>
+     <y>40</y>
+     <width>81</width>
      <height>31</height>
     </rect>
    </property>
@@ -87,7 +120,7 @@
     </size>
    </property>
    <property name="text">
-    <string>Clinets</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Client List&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="textFormat">
     <enum>Qt::AutoText</enum>

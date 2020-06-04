@@ -15,6 +15,8 @@ from services.merge import merge
 import ds1
 import ds2
 import ds3
+import ds4
+import ds5
 from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 import logging
@@ -28,8 +30,12 @@ choice = -1
 ui1 = "abc"
 ui2 = "abc"
 ui3 = "abc"
+ui4 = None
+ui5 = None
 Form = "abc"
 Form2 = None
+Form4 = None
+Form5 = None
 app = "abc"
 isMaster = False
 isBusy = False  # Tell whether the this system is already busy in some download or not
@@ -51,7 +57,7 @@ ipPortMap = {}
 clientFileSection = {}
 clientIpSegmentMap = {}
 OWNPORT = get_free_tcp_port()
-OWNIP = getOwnIp()    #socket.gethostbyname(socket.gethostname()) 
+OWNIP = getOwnIp()   
 clientIpList=[]
 FORMAT = '[%(asctime)-15s] {%(filename)s} {%(funcName)s} {%(lineno)d} %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.WARNING)
@@ -92,7 +98,6 @@ def listenClientTcpReq(arg):
     tcpSock.bind(serverAddress)
     totalClients = len(clientIpList)
     tcpSock.listen(totalClients)
-    # logging.warning("ipSockMap.keys(): ",len(ipSockMap.keys()), "  totalClients: " , totalClients)
     while(len(ipSockMap.keys())<totalClients):    
         connection, address = tcpSock.accept()
         logging.warning(f'Accepted connection: {connection}')
@@ -138,7 +143,6 @@ def listenBroadcast(arg):  # client
         distributionMsg.loadJson(rawData)
         logging.warning("distribution message received ")
         distributionMsg.view()
-        #logging.warning(distributionMsg.data['clientIpSegmentMap'] , OWNIP)
         
         clientIpSegmentMap = distributionMsg.data['clientIpSegmentMap']
         segment = clientIpSegmentMap[OWNIP]
@@ -167,7 +171,6 @@ def listenBroadcast(arg):  # client
         for client in ipSockMap:
             if(client != OWNIP):
                 tcpSock = ipSockMap[client]
-                # filename = str(url[len(url) - 1]) + str(clientIpSegmentMap[client])
                 filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
                 recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
                 recvFileThread.start()
@@ -179,15 +182,11 @@ def listenBroadcast(arg):  # client
         initiateDownloadThread = threading.Thread(
             target=initiateDownload, args=((segment, fileLink),))  # Download Started
         initiateDownloadThread.start()
+        threads.append(initiateDownloadThread)
         
-        
-        # while(initiateDownloadThread.is_alive()):
-        #     pass
         
         filename = str(url[len(url) - 1]).split('.')[0] + str(segment) +'.spld'
 
-
-        # if not initiateDownloadThread.is_alive():
         for ipSock in ipSockMap:
             client = ipSock
             if client != OWNIP:
@@ -198,18 +197,14 @@ def listenBroadcast(arg):  # client
                 sendFileThread.start()
                 threads.append(sendFileThread)
 
-        # logging.warning("recvThread joined.")
-        # recvFileThread.join()
-        # # logging.warning("sendThread joined")
-        # sendFileThread.join()
         for thread in threads:
             thread.join()
         logging.warning("Out of all Send and Recv Threads.")
-        # listenClientTcpReqThread.join()
-        # logging.warning("Out of listenClientTcpReqThread.")  
+ 
         regexFile = str(url[len(url) - 1]).split('.')[0]
         filename = str(url[len(url) - 1])
         merge(regexFile,filename)
+        downloadComplete()
         # tcpSock.close()
         logging.warning("listening to master ended")
 
@@ -247,15 +242,6 @@ def masterAcceptConnection(args):
     global segmentsFetched
     global distributionMsg
     connection = args[0]
-    # address = args[1]
-    # logging.warning(connection, address)
-    # appendLock.acquire()
-    # clientsIp.append(address[0])
-    # ipSockMap[address[0]] = connection
-    # appendLock.release()
-    # while(segmentsFetched == False):
-    #     continue
-    # now = datetime.now()
     connection.sendall(distributionMsg.dumpJson())
 
 def listenTcp(arg):
@@ -268,8 +254,6 @@ def listenTcp(arg):
         tcpConnectionList.append((connection, address))
         clientsIp.append(address[0])
         ipSockMap[address[0]] = connection
-        # recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename),))
-        # recvFileThread.start()
         logging.warning(f'Connected to : {address[0]} : {address[1]}')
         if choice == 0:
             break
@@ -313,7 +297,6 @@ def Master(arg):
             if client != OWNIP:
                 logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
                 tcpSock = ipSockMap[client]
-                # filename = str(url[len(url) - 1]) + str(clientIpSegmentMap[client])
                 filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
                 recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
                 recvFileThread.start()
@@ -322,95 +305,43 @@ def Master(arg):
         initiateDownloadThread = threading.Thread(target=initiateDownload, args=(
             (segment, fileLink),))  # Download Started in Master
         initiateDownloadThread.start()
-
-
-        # while(initiateDownloadThread.is_alive()):
-        #     pass
+        threads.append(initiateDownloadThread)
 
         segment = clientIpSegmentMap[OWNIP]
         filename = str(url[len(url) - 1]).split('.')[0] + str(segment) + '.spld'
 
-        # if not initiateDownloadThread.is_alive():
         for ipSock in ipSockMap:
             client = ipSock
             if client != OWNIP:
-                # logging.warning(ipSock, ipSockMap[ipSock])
                 tcpSock = ipSockMap[client]
                 fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
                 sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
                 sendFileThread.start()
                 threads.append(sendFileThread)
 
-        # make direct connection and send the distribution message
-        # check if clientIp is it's own ip or not and is there already a connection or not
         logging.warning("recvFileThread joined")
         for thread in threads:
             thread.join()
-        # recvFileThread.join()
-        # sendFileThread.join()
+
         regexFile = str(url[len(url) - 1]).split('.')[0]
         filename = str(url[len(url) - 1])
         merge(regexFile,filename)
+        downloadComplete()
 
 
 def Client():
     listenBroadcastThread = threading.Thread(
         target=listenBroadcast, args=("",))
     listenBroadcastThread.start()
-    listenBroadcastThread.join()
-    # while(listenBroadcastThread.is_alive()):
-    #     pass
-    # clientsIp = clientsIp+ list(distributionMsg.data['clientIpSegmentMap'].keys())
-    # for clientIp in clientsIp:
-    #   ipPortMap[clientIp] = distributionMsg.data['clientIpSegmentMap'][clientIp]['port']
-
-    # clientsCount = len(clientsIp)
-    # sock.listen(clientsCount-2) #removed its own count and master
-
-    # acceptConnectionsThread=threading.Thread(target=acceptConnections,args=({'sock':sock,'clientsCount':clientsCount},))
-    # acceptConnectionsThread.start()
-
-    # for clientIp in clientsIp:
-    #   if clientIp in ipSockMap:
-    #       logging.warning("Aleardy connected")
-    #   elif clientIp == OWNIP:
-    #       logging.warning("Skipping since this is my ip: ",clientIp)
-    #   else:
-    #       sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #       logging.warning("making connection request with: ",clientIp)
-    #       server_address = (clientIp, ipPortMap[clientIp])
-    #       logging.warning('Connecting to %s port %s' % server_address)
-    #       sock.connect(server_address)
-    #       logging.warning("connected to client: ",clientIp)
-    #       ipSockMap[clientIp] = sock
-
-    # make one thread to accept the connections
-
-    # recv distribution message from master
-    # accept connection request from master and get the distributionMsg details
-    # store the clients ip in clientsIp
-    # for clientIp in clientsIp:
-        #logging.warning("make connection")
-        # make direct connection
-        # check if clientIp is it's own ip or not and is there already a connection or not
-
-#test = MSG()
-# test.view()
-
+    Form.close()
+    Form5.show()
+    # listenBroadcastThread.join()
+    
 
 def startMasterScreen():
     global app
     global Form2
     global Form
-    # Form.close()
-    #app = QtWidgets.QApplication(sys.argv)
-
-    # Form2.show()
-    # ui2.Master.clicked.connect(Master)
-    # ui1.Client.clicked.connect(Client)
-
-    # Form.show()
-    # sys.exit(app.exec_())
 
 
 def startMasterUtil():
@@ -440,24 +371,22 @@ def refreshList():
 
 def endAnnounceMent():
     global choice
+    global fileLink
+    fileLink = str(ui4.downloadLink.toPlainText())
     choice = 0
+    Form4.close()
+    Form5.show()
+
+def urlPicker():
+    Form2.close()
+    Form4.show()
+
+def downloadComplete():
+    ui5.changeText("Download Complete")
+    ui5.label_2.setVisible(False)
 
 
 if __name__ == "__main__":
-        # logging.warning("Program started")
-        # #logic to trigger master and client
-        # logging.warning("enter 1 for master, 0 for client")
-        # x=int(input())
-        # if(x==0):
-        #   isMaster=False
-        # else:
-        #   isBusy=True  #if the system is a master, it will not involve in other download
-        #   isMaster=True
-        # #logicEnd
-
-        # if(isMaster):
-
-        # else:
     app = QtWidgets.QApplication(sys.argv)
     Form = QtWidgets.QWidget()
     ui1 = ds1.Ui_Form()
@@ -465,12 +394,22 @@ if __name__ == "__main__":
     Form2 = QtWidgets.QWidget()
     ui2 = ds2.Ui_Form()
     ui2.setupUi(Form2)
+
+    Form4 = QtWidgets.QWidget()
+    ui4 = ds4.Ui_Form()
+    ui4.setupUi(Form4)
+
+    Form5 = QtWidgets.QWidget()
+    ui5 = ds5.Ui_Form()
+    ui5.setupUi(Form5)
+
     ui1.Master.clicked.connect(startMasterUtil)
     ui1.Client.clicked.connect(Client)
     ui2.Refresh.clicked.connect(reannounce)
-    ui2.Next.clicked.connect(endAnnounceMent)
+    ui2.Next.clicked.connect(urlPicker)
+
+    ui4.Download.clicked.connect(endAnnounceMent)
     Form.show()
-    # Form2.show()
     sys.exit(app.exec_())
-    while(True):
-        pass
+    # while(True):
+    #     pass

@@ -20,7 +20,9 @@ def divideFile(url, clientList):
         clientFileSection[clientIp] = str(int(start)) + '-' + str(int(end))
         start = end + 1
         end += individualSize
-    clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(size)
+    
+    if(len(clientList) != 1):
+        clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(size)
     logging.warning('File Size = {}'.format(size))
     logging.warning (clientFileSection)
     return clientFileSection

@@ -44,4 +44,4 @@ def recvFile(args):
             # bytes_read = tcpSock.recv(BUFFER_SIZE)
         logging.warning("File Received")
     # tcpSock.close()
-    logging.warning("Ending recvFile")
+    logging.warning(f"Ending recvFile for {tcpSock}")

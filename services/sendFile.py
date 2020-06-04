@@ -41,8 +41,11 @@ def sendFile(args):
         if(byte_read):
             tcpSock.sendall(byte_read)
             l=l+len(byte_read)
-            logging.warning(f"Length of file read: {len(byte_read)} , Total Length of file read: {l}")
+            logging.warning(f"{tcpSock.getsockname()[0]} : {tcpSock.getpeername()[0]}  Length of file read: {len(byte_read)} , Total Length of file read: {l}")
+            byte_read = None
             byte_read = f.read(BUFFER_SIZE)
+            if(byte_read):
+                logging.warning(f"{tcpSock.getsockname()[0]} : {tcpSock.getpeername()[0]} Length of file read after: {len(byte_read)}")
         else:
             break
 
@@ -59,5 +62,5 @@ def sendFile(args):
     #     bytes_read = f.read(BUFFER_SIZE)
     # # tcpSock.close()
     # tcpSock.sendall(b'abcd')
-    logging.warning(f"Ending sendFile")
+    logging.warning(f"Ending sendFile for {tcpSock}")
     f.close()

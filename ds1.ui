@@ -6,19 +6,26 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>256</width>
-    <height>179</height>
+    <width>311</width>
+    <height>255</height>
    </rect>
   </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::PreventContextMenu</enum>
+  </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>SplitLoad</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>download.png</normaloff>download.png</iconset>
   </property>
   <widget class="QPushButton" name="Master">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>80</y>
-     <width>91</width>
+     <x>30</x>
+     <y>180</y>
+     <width>111</width>
      <height>31</height>
     </rect>
    </property>
@@ -47,9 +54,9 @@
   <widget class="QPushButton" name="Client">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>120</y>
-     <width>91</width>
+     <x>170</x>
+     <y>180</y>
+     <width>111</width>
      <height>31</height>
     </rect>
    </property>
@@ -60,14 +67,49 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>50</y>
-     <width>91</width>
-     <height>16</height>
+     <x>0</x>
+     <y>140</y>
+     <width>311</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::DefaultContextMenu</enum>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Use this System to:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>10</y>
+     <width>311</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>Use this system to</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;SplitLoad&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>50</y>
+     <width>55</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>download.png</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>
