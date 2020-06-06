@@ -9,23 +9,31 @@ def divideFile(url, clientList):
     logging.warning(f'Please wait while segments are being calculated for {url}')
     head = requests.head(url, allow_redirects=True).headers
     logging.warning(f'{head}')
-    contentDisposition = head.get('Content-Disposition')
-    filename = contentDisposition.split('filename=')[1]
+    # contentDisposition = head.get('Content-Disposition')
+    # filename = contentDisposition.split('filename=')[1]
+    splitUrl = url.split('/')
+    filename = splitUrl[len(splitUrl) - 1]
     size = int(head.get('Content-Length'))-1
     start = 0
     if size % len(clientList) == 0:
         individualSize = size / len(clientList)
     else:
         individualSize = size // len(clientList)
+    individualSize = individualSize-1
     end = individualSize
+    count = 0
     clientFileSection = {}
     for clientIp in clientList:
         clientFileSection[clientIp] = str(int(start)) + '-' + str(int(end))
+        if(count == 0):
+            individualSize = individualSize+1
+            count = count+1
         start = end + 1
         end += individualSize
-    
+                                    
     if(len(clientList) != 1):
         clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(size)
+        # logging.warning(f'{int(end - 2*individualSize + 1)}')
     logging.warning('File Size = {}'.format(size))
     logging.warning (clientFileSection)
     return (clientFileSection, filename)

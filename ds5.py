@@ -33,7 +33,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Downloading"))
+        Form.setWindowTitle(_translate("Form", "Download"))
         self.label.setText(_translate("Form", "<html><head/><body><p align=\"center\"><span style=\" font-size:12pt; font-weight:600;\">Downloading</span></p></body></html>"))
         self.label_2.setText(_translate("Downloading", "<html><head/><body><p align=\"center\"><br/></p></body></html>"))
         movie = QtGui.QMovie("icons/loading.gif")

@@ -206,7 +206,7 @@ def listenBroadcast(arg):  # client
  
         
         regexFile = filenameWithExt.split('.')[0]
-        merge(regexFile,filenameWithExt)
+        merge(distributionMsg)
         downloadComplete()
         # tcpSock.close()
         logging.warning("listening to master ended")
@@ -334,7 +334,7 @@ def Master(arg):
         thread.join()
 
     regexFile = filenameWithExt.split('.')[0]
-    merge(regexFile,filenameWithExt)
+    merge(distributionMsg)
     downloadComplete()
     logging.warning("Exiting Master")
 
@@ -361,7 +361,7 @@ def checkClientList(args):
     logging.warning("CheckClientList called")
     length = 0
     while(choice != 0):
-        logging.warning(f'{len(clientsIp)}')
+        # logging.warning(f'{len(clientsIp)}')
         sleep(1)
         if(length != len(clientsIp)):
             length = len(clientsIp)

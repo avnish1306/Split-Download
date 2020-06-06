@@ -46,6 +46,8 @@ def sendFile(args):
             byte_read = f.read(BUFFER_SIZE)
             if(byte_read):
                 logging.warning(f"{tcpSock.getsockname()[0]} : {tcpSock.getpeername()[0]} Length of file read after: {len(byte_read)}")
+            else:
+                logging.warning(f"No Byte read.")
         else:
             break
 

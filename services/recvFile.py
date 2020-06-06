@@ -32,7 +32,7 @@ def recvFile(args):
         while (True):
             bytes_read = tcpSock.recv(BUFFER_SIZE)
             length = length + len(bytes_read)
-            print("recv: ",length)
+            # print("recv: ",length)
             f.write(bytes_read)
             if length >= filesize: 
                 # tcpSock.close()
