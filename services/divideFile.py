@@ -36,4 +36,4 @@ def divideFile(url, clientList):
         # logging.warning(f'{int(end - 2*individualSize + 1)}')
     logging.warning('File Size = {}'.format(size))
     logging.warning (clientFileSection)
-    return (clientFileSection, filename)
+    return (clientFileSection, filename, size+1)

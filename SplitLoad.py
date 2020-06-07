@@ -12,16 +12,17 @@ from services.sendFile import sendFile
 from services.recvFile import recvFile
 from services.getFileDetails import getFileDetails
 from services.merge import merge
-import ds1
-import ds2
-import ds3
-import ds4
-import ds5
+from ui import ds1
+from ui import ds2
+from ui import ds3
+from ui import ds4
+from ui import ds5
 from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 import logging
 from time import sleep
 from random import random
+import os
 
 fileLink = "https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7B2A0BAEDD-4834-F37C-6BB6-2BD8AA910DF4%7D%26lang%3Den%26browser%3D4%26usagestats%3D1%26appname%3DGoogle%2520Chrome%26needsadmin%3Dprefers%26ap%3Dx64-stable-statsdef_1%26brand%3DCHBD%26installdataindex%3Dempty/update2/installers/ChromeSetup.exe"
 appendLock = threading.Lock()
@@ -120,7 +121,6 @@ def initiateDownload(args):
 
 def listenBroadcast(arg):  # client
     global clientIpList
-    global clientDownloadStarted
     data = address = None
     logging.warning("listening broadcast started")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -146,10 +146,12 @@ def listenBroadcast(arg):  # client
         distributionMsg.loadJson(rawData)
         logging.warning("distribution message received ")
         clientDownloadStarted()
+        
         distributionMsg.view()
         filenameWithExt = distributionMsg.data['filenameWithExt']
-
         clientIpSegmentMap = distributionMsg.data['clientIpSegmentMap']
+        size = int(list(clientIpSegmentMap.values())[len(list(clientIpSegmentMap.values()))-1].split('-')[1]) + 1
+        setFilename(filenameWithExt, size)
         segment = clientIpSegmentMap[OWNIP]
         logging.warning (segment)
         fileLink = distributionMsg.data['fileLink']
@@ -288,11 +290,12 @@ def Master(arg):
     global segmentsFetched
     global distributionMsg
     clientsIp.append(OWNIP)
-    clientIpSegmentMap, filenameWithExt = divideFile(fileLink, clientsIp)
+    clientIpSegmentMap, filenameWithExt, size = divideFile(fileLink, clientsIp)
     distributionMsg = MSG(
         {"fileLink": fileLink, "clientIpSegmentMap": clientIpSegmentMap, "filenameWithExt" : filenameWithExt}, "Distribution message", isMaster)
     logging.warning("This is the distribution msg ")
     distributionMsg.view()
+    setFilename(filenameWithExt, int(size))
     for element in tcpConnectionList:
         sendDistributionMsgThread = threading.Thread(target = sendDistributionMsg, args = ((element[0],element[1]),))
         sendDistributionMsgThread.start()
@@ -345,10 +348,14 @@ def Client():
     Form.close()
     ui5.changeText("Waiting",'red')
     Form5.show()
+    ui5.label_3.setVisible(False)
+    ui5.label_4.setVisible(False)
 
     # listenBroadcastThread.join()
 def clientDownloadStarted():
     ui5.changeText("Downloading")
+    ui5.label_3.setVisible(True)
+    
 
 def startMasterScreen():
     global app
@@ -367,7 +374,7 @@ def checkClientList(args):
             length = len(clientsIp)
             logging.warning("Refreshing List")
             refreshList()
-    logging.warning("Exiting chechkClientList")
+    logging.warning("Exiting checkClientList")
         
 
 def startMasterUtil():
@@ -385,6 +392,20 @@ def reannounce():
     choice = 1
     refreshList()
 
+def setFilename(filenameWithExt, size:int):
+    sizeString = ''
+    if ((size // 2**30) > 0):
+        sizeString = ' GB'
+        sizeString = '%.3f' %(size / 2**30) + sizeString
+    elif ((size // 2**20) > 0):
+        sizeString = ' MB'
+        sizeString = '%.3f' %(size / 2**20) + sizeString
+    else:
+        sizeString = ' KB'
+        sizeString = '%.3f' %(size / 2**10) + sizeString
+
+    fileString = f"File Name : {filenameWithExt} ({sizeString})"
+    ui5.changeTextFilename(fileString)
 
 def refreshList():
     global clientsIp
@@ -404,6 +425,8 @@ def endAnnounceMent():
     choice = 0
     Form4.close()
     Form5.show()
+    ui5.label_4.setVisible(False)
+
 
 def urlPicker():
     Form2.close()
@@ -412,6 +435,11 @@ def urlPicker():
 def downloadComplete():
     ui5.changeText("Download Complete",'green')
     ui5.label_2.setVisible(False)
+    path = os.path.dirname(os.path.abspath(__file__))
+    path = "File downloaded at : " + path
+    ui5.label_4.setVisible(True)
+    ui5.changeTextDownloadedAt(path)
+    # # setDownloadedAt()
 
 
 if __name__ == "__main__":
