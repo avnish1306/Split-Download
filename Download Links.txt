@@ -1,0 +1,8 @@
+https://download.ccleaner.com/ccsetup567.exe (24.6MB)
+https://www.7-zip.org/a/7z1900-x64.msi (1.67 MB)
+https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7B2A0BAEDD-4834-F37C-6BB6-2BD8AA910DF4%7D%26lang%3Den%26browser%3D4%26usagestats%3D1%26appname%3DGoogle%2520Chrome%26needsadmin%3Dprefers%26ap%3Dx64-stable-statsdef_1%26brand%3DCHBD%26installdataindex%3Dempty/update2/installers/ChromeSetup.exe (1.5 MB)
+https://wordpress.org/latest.zip (12MB)
+https://w.ushareit.com/w/official/exe/SHAREit-KCWEB.exe (6MB)
+https://updates.tdesktop.com/tsetup/tsetup.2.1.10.exe (21MB)
+
+
