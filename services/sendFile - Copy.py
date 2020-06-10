@@ -1,62 +1,49 @@
 import os
 import logging
-import json
 from time import sleep
+from alive_progress import alive_bar
 
-BUFFER_SIZE = 4096
+BUFFER_SIZE = 655350
 SEPARATOR = "<SEPARATOR>"
 FORMAT = '[%(asctime)-15s] {%(filename)s} {%(funcName)s} {%(lineno)d} %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.WARNING)
 
-class MSG:
-    master = None
-    msg = None
-    data = None
-
-    def __init__(self, data, msg="", master=False):
-        self.master = master
-        self.msg = msg
-        self.data = data
-
-    def view(self):
-        logging.warning(f"\n\nMaster: {self.master}\nMessage: {self.msg}\nData: {self.data}\n\n")
-
-    def getJson(self):
-        return {'master': self.master, 'msg': self.msg, 'data': self.data}
-
-    def loadJson(self, rawData):
-        decodedData = rawData.decode('ASCII')
-        obj = json.loads(decodedData)           #returns an object from a string representing a json object.
-        self.master = obj['master']
-        self.msg = obj['msg']
-        self.data = obj['data']
-
-    def dumpJson(self):
-        rawData = json.dumps(self.getJson())    #returns a string representing a json object from an object.
-        data = rawData.encode('ASCII')
-        logging.warning(f'Data :{data}')
-        return data
-
-
 def sendFile(args):
-    tcpSock = args[1]
-    filename = args[2]
-    logging.warning(f"\nSending: {filename} to {tcpSock}\n")
-    filesize = os.path.getsize(filename)
-    fileObject = {}
-    fileObject['filename'] = filename
-    fileObject['filesize'] = filesize
-    # logging.warning(f'filename:{filename}  filesize:{filesize}')
-    msg = MSG(fileObject)
-    tcpSock.sendall(msg.dumpJson())
-    sleep(1)
-    with open(filename, "rb") as f:
-        while True:
-            bytes_read = f.read(BUFFER_SIZE)
-            if not bytes_read:
-                # file transmitting is done
-                logging.warning("File Sent")
-                # tcpSock.close()
-                exit(0)
-            tcpSock.sendall(bytes_read) 
-    # tcpSock.close()
+    # logging.warning("Starting sendFile")
+    tcpSock = args[0]
+    filename = args[1]
+    filesize = args[2]
+    # logging.warning(f"\nSending: {filename} to {tcpSock}\n")
+    # logging.warning(f"Filesize : {filesize}")
+    while(True):
+        try:
+            f = open(filename, "rb")
+            break
+        except Exception as e:
+            pass
+    l=0
+    byte_read=f.read(BUFFER_SIZE)
+    if byte_read:
+        l = len(byte_read)
+    print("\n\n")
+    with alive_bar(filesize, manual = True) as bar:
+        while(True):
+            while(not byte_read and f.tell()<filesize):
+                byte_read = f.read(BUFFER_SIZE)
+                bar(perc=f.tell()/filesize, text='Sending File')
+            if(byte_read):
+                tcpSock.sendall(byte_read)
+                l=l+len(byte_read)
+
+                # logging.warning(f"{tcpSock.getsockname()[0]} : {tcpSock.getpeername()[0]}  Length of file read: {len(byte_read)} | f.tell {f.tell()} , Total Length of file read: {l}")
+                byte_read = None
+                byte_read = f.read(BUFFER_SIZE)
+                bar(perc=f.tell()/filesize, text='Sending File')
+                # if(byte_read):
+                #     logging.warning(f"{tcpSock.getsockname()[0]} : {tcpSock.getpeername()[0]} Length of file read after: {len(byte_read)}")
+                # else:
+                #     logging.warning(f"No Byte read.")
+            else:
+                break
+    # logging.warning(f"Ending sendFile for {tcpSock}")
+    f.close()

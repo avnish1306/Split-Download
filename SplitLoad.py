@@ -23,6 +23,7 @@ import logging
 from time import sleep
 from random import random
 import os
+import enlighten
 
 fileLink = "https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7B2A0BAEDD-4834-F37C-6BB6-2BD8AA910DF4%7D%26lang%3Den%26browser%3D4%26usagestats%3D1%26appname%3DGoogle%2520Chrome%26needsadmin%3Dprefers%26ap%3Dx64-stable-statsdef_1%26brand%3DCHBD%26installdataindex%3Dempty/update2/installers/ChromeSetup.exe"
 appendLock = threading.Lock()
@@ -122,6 +123,7 @@ def initiateDownload(args):
 def listenBroadcast(arg):  # client
     global clientIpList
     data = address = None
+    manager = enlighten.get_manager()
     #logging.warning("listening broadcast started")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((broadcastListenInterface, broadcastPort))
@@ -172,12 +174,19 @@ def listenBroadcast(arg):  # client
                 ipSockMap[client]=tcpSock
 
         threads = []
+        progressBars = {}
 
         for client in ipSockMap:
             if(client != OWNIP):
                 tcpSock = ipSockMap[client]
-                filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
-                recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
+                filedetails = getFileDetails(OWNIP, distributionMsg, tcpSock)
+                recvFileProgress = manager.counter(total= filedetails[1], desc="Receiving File", unit="bytes", color="green")
+                progressBars[client] = (recvFileProgress,filedetails)
+
+        for client in ipSockMap:
+            if(client != OWNIP):
+                tcpSock = ipSockMap[client]
+                recvFileThread = threading.Thread(target=recvFile,args=((tcpSock, progressBars[client][1][0], progressBars[client][1][1], progressBars[client][0]),))
                 recvFileThread.start()
                 threads.append(recvFileThread)
 
@@ -193,13 +202,20 @@ def listenBroadcast(arg):  # client
         
         filename = filenameWithExt.split('.')[0] + str(segment) +'.spld'
 
+        progressBars = {}
+
+        for client in ipSockMap:
+            if(client != OWNIP):
+                tcpSock = ipSockMap[client]
+                filedetails = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
+                sendFileProgress = manager.counter(total=filedetails[1], desc=f"Sending File", unit="bytes", color="red")
+                progressBars[client] = (sendFileProgress,filedetails)
+
         for ipSock in ipSockMap:
             client = ipSock
             if client != OWNIP:
-                #logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
-                tcpSock = ipSockMap[client]
-                fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, False)
-                sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
+                tcpSock = ipSockMap[client] 
+                sendFileThread = threading.Thread(target=sendFile,args=((tcpSock, progressBars[client][1][0], progressBars[client][1][1], progressBars[client][0]),))
                 sendFileThread.start()
                 threads.append(sendFileThread)
 
@@ -277,6 +293,7 @@ def Master(arg):
     isMaster = True
     global isAnnouncementOn
     isAnnouncementOn = True
+    manager = enlighten.get_manager()
     
     listenTcpThread = threading.Thread(target=listenTcp, args = ("",))
     listenTcpThread.start()
@@ -307,13 +324,20 @@ def Master(arg):
     segment = clientIpSegmentMap[OWNIP]
 
     threads = []
-    for ipSock in ipSockMap:
-        client = ipSock
-        if client != OWNIP:
-            #logging.warning(f'{ipSock}, {ipSockMap[ipSock]}')
+    progressBars = {}
+
+    for client in ipSockMap:
+        if(client != OWNIP):
             tcpSock = ipSockMap[client]
-            filename, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock)
-            recvFileThread = threading.Thread(target=recvFile,args=((tcpSock,filename,filesize),))
+            filedetails = getFileDetails(OWNIP, distributionMsg, tcpSock)
+            recvFileProgress = manager.counter(total= filedetails[1], desc="Receiving File", unit="bytes", color="green")
+            progressBars[client] = (recvFileProgress,filedetails)
+            # logging.warning(f"Client : {client}")
+
+    for client in ipSockMap:
+        if(client != OWNIP):
+            tcpSock = ipSockMap[client]
+            recvFileThread = threading.Thread(target=recvFile,args=((tcpSock, progressBars[client][1][0], progressBars[client][1][1], progressBars[client][0]),))
             recvFileThread.start()
             threads.append(recvFileThread)
 
@@ -326,12 +350,20 @@ def Master(arg):
     segment = clientIpSegmentMap[OWNIP]
     filename = filenameWithExt.split('.')[0] + str(segment) + '.spld'
 
+    progressBars = {}
+
+    for client in ipSockMap:
+        if(client != OWNIP):
+            tcpSock = ipSockMap[client]
+            filedetails = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
+            sendFileProgress = manager.counter(total=filedetails[1], desc=f"Sending File", unit="bytes", color="red")
+            progressBars[client] = (sendFileProgress,filedetails)
+
     for ipSock in ipSockMap:
         client = ipSock
         if client != OWNIP:
-            tcpSock = ipSockMap[client]
-            fname, filesize = getFileDetails(OWNIP, distributionMsg, tcpSock, flag = False)
-            sendFileThread = threading.Thread(target=sendFile,args=((tcpSock,filename,filesize),))
+            tcpSock = ipSockMap[client] 
+            sendFileThread = threading.Thread(target=sendFile,args=((tcpSock, progressBars[client][1][0], progressBars[client][1][1], progressBars[client][0]),))
             sendFileThread.start()
             threads.append(sendFileThread)
 
@@ -341,7 +373,7 @@ def Master(arg):
 
     regexFile = filenameWithExt.split('.')[0]
     merge(distributionMsg)
-    #logging.warning(f"Downloading time : {time.time() - startTime}")
+    logging.warning(f"Downloading time : {time.time() - startTime}")
     downloadComplete()
     #logging.warning("Exiting Master")
 
