@@ -1,6 +1,5 @@
 import os
 import logging
-from alive_progress import alive_bar
 
 SEPARATOR = "<SEPARATOR>"
 BUFFER_SIZE = 655350
