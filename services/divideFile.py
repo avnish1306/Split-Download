@@ -8,7 +8,7 @@ def divideFile(url, clientList):
     #url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
     logging.warning(f'Please wait while segments are being calculated for {url}')
     head = requests.head(url, allow_redirects=True).headers
-    logging.warning(f'{head}')
+    # logging.warning(f'{head}')
     # contentDisposition = head.get('Content-Disposition')
     # filename = contentDisposition.split('filename=')[1]
     splitUrl = url.split('/')
@@ -34,6 +34,6 @@ def divideFile(url, clientList):
     if(len(clientList) != 1):
         clientFileSection[clientList[len(clientList)-1]] = str(int(end - 2*individualSize + 1)) + '-' + str(size)
         # logging.warning(f'{int(end - 2*individualSize + 1)}')
-    logging.warning('File Size = {}'.format(size))
+    # logging.warning('File Size = {}'.format(size))
     logging.warning (clientFileSection)
     return (clientFileSection, filename, size+1)

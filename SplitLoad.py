@@ -41,7 +41,6 @@ Form5 = None
 app = "abc"
 isMaster = False
 isBusy = False  # Tell whether the this system is already busy in some download or not
-PORT = 5200
 BUFSIZE = 655350
 broadcastPort = 2100
 tcpPort = 8888
@@ -49,10 +48,6 @@ clientsIp = []  # list to store clients
 tcpConnectionList = []
 broadcastInterface = "192.168.43.255"
 broadcastListenInterface = "0.0.0.0"
-multicastInterface = '224.1.1.1'
-multicastPort = 1306
-basePort = 6000
-isAnnouncementOn = True
 ipSockMap = {}
 ipThreadMap = {}
 ipPortMap = {}
@@ -129,18 +124,14 @@ def listenBroadcast(arg):  # client
     sock.bind((broadcastListenInterface, broadcastPort))
     res = MSG({})
     #logging.warning('Listening for master at {}'.format(sock.getsockname()))
-    while True:
-        # receive broadcast message
-        # if the message is from master exit the while loop else continue listening
-        data, address = sock.recvfrom(BUFSIZE)
-        res.loadJson(data)
-        if(res.master == True or res.master == "True"):
-                break
-        sock.close()
+    data, address = sock.recvfrom(BUFSIZE)
+    res.loadJson(data)
+    sock.close()
     if res.msg == 'Add request':
         tcpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #logging.warning("Making connection with the Master at IP = {} and Port = {}".format(
-            # address[0], tcpPort))
+        logging.warning("Announcement Received")
+        logging.warning("Making connection with the Master at IP = {} and Port = {}".format(
+            address[0], tcpPort))
         tcpServerAddress = (address[0], tcpPort)
         tcpSock.connect(tcpServerAddress)
         rawData = tcpSock.recv(BUFSIZE)
@@ -233,7 +224,6 @@ def listenBroadcast(arg):  # client
 
 
 def announceBroadcast(arg):
-    global isAnnouncementOn
     global choice
     #logging.warning("announcing broadcast started")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -241,6 +231,7 @@ def announceBroadcast(arg):
     while(True):
         res = MSG({}, "Add request", isMaster)
         sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))
+        logging.warning("Announcing to Join.")
         time.sleep(1)
         # for i in clientsIp:
             #logging.warning(f"ip: {i}")
@@ -249,7 +240,6 @@ def announceBroadcast(arg):
         while(choice == -1):
             pass
         if(choice == 0):
-            isAnnouncementOn = False
             res.msg = 'Broadcast Ends'
             # sock.sendto(res.dumpJson(), (broadcastInterface, broadcastPort))
             tcpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -257,10 +247,6 @@ def announceBroadcast(arg):
             tcpSock.connect(tcpServerAddress)
             break
         choice = -1
-    # announce the welcome message over network
-    # display received ips
-    # check if user want to announce again or not and continue the loop if refresh happen
-    # conditional : global isAnnouncementOn = False
     sock.close()
     #logging.warning("announcing broadcast ended")
 
@@ -291,8 +277,6 @@ def Master(arg):
     startMasterScreen()
     global isMaster
     isMaster = True
-    global isAnnouncementOn
-    isAnnouncementOn = True
     manager = enlighten.get_manager()
     
     listenTcpThread = threading.Thread(target=listenTcp, args = ("",))
